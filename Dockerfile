@@ -10,6 +10,6 @@ RUN mvn clean install
 
 EXPOSE 9900
 
-COPY --from=build /target/java-rocketeseat.jar app.jar
+COPY --from=build /target/todolist-rocketeseat.jar app.jar
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

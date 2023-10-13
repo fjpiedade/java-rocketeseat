@@ -67,7 +67,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
         </plugins>
-        <finalName>java-rocketeseat</finalName>
+        <finalName>todolist-rocketeseat</finalName>
     </build>
 
 </project>
