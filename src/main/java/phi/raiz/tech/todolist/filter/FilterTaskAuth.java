@@ -21,30 +21,46 @@ public class FilterTaskAuth extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-        //take authentication data username and password
-        var authorization = request.getHeader("Authorization");
+        var servletPath = request.getServletPath();
+        //System.out.println(servletPath);
+        if (servletPath.startsWith("/tasks/")) {
+            //take authentication data username and password
+            var authorization = request.getHeader("Authorization");
+            //System.out.println("Authorization: "+authorization);
+            var authEncoded = authorization.substring("Basic".length()).trim();
+            //System.out.println("authEncoded: "+authEncoded);
+            byte[] authDecoded = Base64.getDecoder().decode(authEncoded);
+            var authString = new String(authDecoded);
+            //System.out.println("authEncoded: "+authString);
+            String[] credentials = authString.split(":");
 
-        var authEncoded = authorization.substring("Basic".length()).trim();
-        byte[] authDecoded = Base64.getDecoder().decode(authEncoded);
-        var authString = new String(authDecoded);
-        String[] credentials = authString.split(":");
-
-        String username = credentials[0];
-        String password = credentials[1];
-
-        //validate username
-        var user = this.userRepository.findByUsername(username);
-        if (user != null) {
-            response.sendError(401, "User without authorization!");
-        } else {
-            //validate password
-            var passwordVerify = BCrypt.verifyer().verify(password.toCharArray(), user.getPassword());
-            if (passwordVerify.verified) {
-                //forward
-                filterChain.doFilter(request, response);
-            }else {
-                response.sendError(401);
+            String username = credentials[0];
+            String password = credentials[1];
+            //System.out.println("username: "+username);
+            //System.out.println("password: "+password);
+            //validate username
+            var user = this.userRepository.findByUsername(username);
+            if (user == null) {
+                //System.out.println("user is null");
+                response.sendError(401, "User without authorization!");
+            } else {
+                //validate password
+                //System.out.println("password validate");
+                var passwordVerify = BCrypt.verifyer().verify(password.toCharArray(), user.getPassword());
+                if (passwordVerify.verified) {
+                    //forward
+                    //System.out.println("password is fine and forward");
+                    request.setAttribute("idUser",user.getId());
+                    filterChain.doFilter(request, response);
+                } else {
+                    //System.out.println("Password not match!");
+                    response.sendError(401, "Password not match!");
+                }
             }
+        } else {
+            //forward
+            //System.out.println("forward when not /tasks/ route");
+            filterChain.doFilter(request, response);
         }
     }
 }
